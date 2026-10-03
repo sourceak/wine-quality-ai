@@ -77,7 +77,7 @@ def extract_features(user_input):
 
     if not api_key:
         raise ValueError(
-            "OPENAI_API_KEY was not found in the .env file."
+            "GROQ_API_KEY was not found in the .env file."
         )
 
     client = OpenAI(
@@ -117,6 +117,51 @@ User message:
     text = response.output_text.strip()
 
     return json.loads(text)
+
+
+
+
+def generate_response(features, prediction):
+    """Generate a user-friendly explanation of the model prediction."""
+
+    api_key = os.getenv("GROQ_API_KEY")
+
+    if not api_key:
+        raise ValueError(
+            "GROQ_API_KEY was not found in the .env file."
+        )
+
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.groq.com/openai/v1",
+    )
+
+    prompt = f"""
+You are explaining the output of a wine-quality machine-learning model.
+
+The model predicted a wine quality score of {prediction:.2f} out of 10.
+
+The wine measurements were:
+{json.dumps(features, indent=2)}
+
+Write a short, clear explanation for the user.
+
+Rules:
+- State the predicted quality score.
+- Explain that the prediction is based on the provided physicochemical measurements.
+- Give brief context for what the score means.
+- Do not claim that the model knows the wine's taste or subjective quality with certainty.
+- Mention that this is a machine-learning estimate, not a professional wine rating.
+- Do not invent measurements or facts that were not provided.
+- Keep the response to about 3-5 sentences.
+"""
+
+    response = client.responses.create(
+        model="openai/gpt-oss-20b",
+        input=prompt,
+    )
+
+    return response.output_text.strip()
 
 
 # --------------------------------------------------
@@ -225,23 +270,26 @@ def main():
 
                 return
 
+
             prediction = result["prediction"]
 
             st.success(
                 f"Predicted wine quality: {prediction:.2f} / 10"
             )
 
-            st.write(
-                "This prediction was produced by the trained "
-                "Random Forest regression model selected from "
-                "the MLflow experiments."
-            )
+            with st.spinner("Generating explanation..."):
+                explanation = generate_response(
+                    features,
+                    prediction,
+                )
+
+            st.subheader("AI Explanation")
+            st.write(explanation)
 
             st.caption(
-                "This is a machine-learning estimate based on "
-                "physicochemical wine measurements. It should "
-                "not be treated as an objective or professional "
-                "wine-quality rating."
+                "The numerical prediction comes from the trained "
+                "Random Forest regression model. The AI explanation "
+                "provides context for that prediction."
             )
 
         except json.JSONDecodeError:
