@@ -1,0 +1,40 @@
+data:
+  red_path: "data/winequality-red.csv"
+  white_path: "data/winequality-white.csv"
+  target: "quality"
+  test_size: 0.20
+  random_state: 42
+
+mlflow:
+  experiment_name: "wine-quality-regression"
+  tracking_uri: "sqlite:///mlflow.db"
+
+models:
+  linear_regression:
+    type: "LinearRegression"
+
+  random_forest_1:
+    type: "RandomForestRegressor"
+    n_estimators: 200
+    max_depth: 12
+    random_state: 42
+
+  random_forest_2:
+    type: "RandomForestRegressor"
+    n_estimators: 400
+    max_depth: 20
+    random_state: 42
+
+  gradient_boosting_1:
+    type: "GradientBoostingRegressor"
+    n_estimators: 150
+    learning_rate: 0.05
+    max_depth: 3
+    random_state: 42
+
+  gradient_boosting_2:
+    type: "GradientBoostingRegressor"
+    n_estimators: 300
+    learning_rate: 0.03
+    max_depth: 4
+    random_state: 42
